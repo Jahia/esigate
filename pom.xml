@@ -698,6 +698,7 @@
 		<module>esigate-war</module>
 		<module>esigate-server</module>
 		<module>esigate-distribution</module>
+		<module>esigate-hybrissso</module>
 	</modules>
 	<distributionManagement>
 		<site>

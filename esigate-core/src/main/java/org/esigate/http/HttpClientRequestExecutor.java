@@ -15,13 +15,6 @@
 
 package org.esigate.http;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
-
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -37,13 +30,13 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.HttpClientConnectionManager;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.cookie.CookieSpecProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.esigate.ConfigurationException;
-import org.esigate.Driver;
-import org.esigate.HttpErrorPage;
-import org.esigate.Parameters;
-import org.esigate.RequestExecutor;
+import org.apache.http.ssl.SSLContexts;
+import org.esigate.*;
 import org.esigate.cache.CacheConfigHelper;
 import org.esigate.cookie.CookieManager;
 import org.esigate.events.EventManager;
@@ -56,6 +49,13 @@ import org.esigate.util.HttpRequestHelper;
 import org.esigate.util.UriUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.ssl.SSLContext;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 
 /**
  * HttpClientHelper is responsible for creating Apache HttpClient requests from incoming requests. It can copy a request
@@ -212,6 +212,26 @@ public final class HttpClientRequestExecutor implements RequestExecutor {
 
             driver.getEventManager().fire(EventManager.EVENT_HTTP_BUILDER_INITIALIZATION,
                     new HttpClientBuilderEvent(httpClientBuilder));
+
+            try {
+                LOG.info("building SSL factory");
+                // Trust own CA and all self-signed certs
+                SSLContext sslcontext =
+                        SSLContexts.custom().loadTrustMaterial(null, new TrustSelfSignedStrategy()).build();
+                // Allow TLSv1 protocol only
+                SSLConnectionSocketFactory sslsf =
+                        new SSLConnectionSocketFactory(sslcontext, new String[] {"TLSv1"}, null,
+                                NoopHostnameVerifier.INSTANCE);
+                httpClientBuilder.setSSLSocketFactory(sslsf);
+                LOG.info("SSL factory injected");
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            } catch (KeyManagementException e) {
+                e.printStackTrace();
+            } catch (KeyStoreException e) {
+                e.printStackTrace();
+            }
+
             return httpClientBuilder.build();
         }
     }
