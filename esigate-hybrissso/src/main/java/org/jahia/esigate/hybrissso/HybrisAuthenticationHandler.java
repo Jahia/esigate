@@ -40,10 +40,22 @@ public class HybrisAuthenticationHandler implements IEventListener, Extension {
     public boolean event(EventDefinition id, Event event) {
         if (EventManager.EVENT_FRAGMENT_POST.equals(id)) {
             FragmentEvent fetchEvent = (FragmentEvent) event;
-            if (fetchEvent.getHttpResponse().containsHeader("Catalog-Mount-Path")) {
-                Header firstHeader = fetchEvent.getHttpResponse().getFirstHeader("Catalog-Mount-Path");
+            if (fetchEvent.getHttpResponse().containsHeader("Cio-Catalog-Mount-Path")) {
+                Header firstHeader = fetchEvent.getHttpResponse().getFirstHeader("Cio-Catalog-Mount-Path");
                 LOG.info(firstHeader.getName() + ":" + firstHeader.getValue());
-                fetchEvent.getOriginalRequest().getSession().setAttribute("Catalog-Mount-Path", firstHeader.getValue());
+                fetchEvent.getOriginalRequest().getSession()
+                        .setAttribute("Cio-Catalog-Mount-Path", firstHeader.getValue());
+            }
+            if (fetchEvent.getHttpResponse().containsHeader("Cio-Product-Url-Prefix")) {
+                Header firstHeader = fetchEvent.getHttpResponse().getFirstHeader("Cio-Product-Url-Prefix");
+                LOG.info(firstHeader.getName() + ":" + firstHeader.getValue());
+                fetchEvent.getOriginalRequest().getSession()
+                        .setAttribute("Cio-Product-Url-Prefix", firstHeader.getValue());
+            }
+            if (fetchEvent.getHttpResponse().containsHeader("Cio-Dx-Locale")) {
+                Header firstHeader = fetchEvent.getHttpResponse().getFirstHeader("Cio-Dx-Locale");
+                LOG.info(firstHeader.getName() + ":" + firstHeader.getValue());
+                fetchEvent.getOriginalRequest().getSession().setAttribute("Cio-Dx-Locale", firstHeader.getValue());
             }
             if (fetchEvent.getHttpResponse().containsHeader("Hybris-Token")) {
                 Header firstHeader = fetchEvent.getHttpResponse().getFirstHeader("Hybris-Token");
@@ -57,9 +69,19 @@ public class HybrisAuthenticationHandler implements IEventListener, Extension {
             if (attribute != null && !"invalid".equalsIgnoreCase(attribute.toString())) {
                 fetchEvent.getHttpRequest().addHeader("Authorization", "Bearer " + attribute.toString());
             }
-            attribute = fetchEvent.getOriginalRequest().getSession().getAttribute("Catalog-Mount-Path");
+            attribute = fetchEvent.getOriginalRequest().getSession().getAttribute("Cio-Catalog-Mount-Path");
             if (attribute != null && !"invalid".equalsIgnoreCase(attribute.toString())) {
-                fetchEvent.getHttpRequest().addHeader("Catalog-Mount-Path", attribute.toString());
+                fetchEvent.getHttpRequest().addHeader("Cio-Catalog-Mount-Path", attribute.toString());
+            }
+
+            attribute = fetchEvent.getOriginalRequest().getSession().getAttribute("Cio-Product-Url-Prefix");
+            if (attribute != null && !"invalid".equalsIgnoreCase(attribute.toString())) {
+                fetchEvent.getHttpRequest().addHeader("Cio-Product-Url-Prefix", attribute.toString());
+            }
+
+            attribute = fetchEvent.getOriginalRequest().getSession().getAttribute("Cio-Dx-Locale");
+            if (attribute != null && !"invalid".equalsIgnoreCase(attribute.toString())) {
+                fetchEvent.getHttpRequest().addHeader("Cio-Dx-Locale", attribute.toString());
             }
         }
         return true;
